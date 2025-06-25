@@ -26,7 +26,7 @@ I want to make different types of flashcards:
 
 import fitz  # PyMuPDF
 import re
-
+import pandas as pd
 
 # Open your PDF
 doc = fitz.open("merriam-webster_s_vocabulary_builder.pdf")
@@ -41,7 +41,7 @@ def clean_and_reconstruct_word_paragraphs(text):
     paragraphs = []
     current_para = ""
 
-    for i, line in enumerate(lines):
+    for _, line in enumerate(lines):
         stripped = line.strip()
 
         if not stripped:
@@ -102,6 +102,7 @@ def clean_and_reconstruct_root_paragraphs(text, root, unit_match):
 ## Find all roots and add them to a list
 def find_roots(doc, num_units):
     all_roots = []
+    unit = None
     for _, page in enumerate(doc):
         text = page.get_text("text")
         page_lines = text.split("\n")
@@ -123,3 +124,41 @@ def find_roots(doc, num_units):
 
 
 all_roots, all_roots_flat = find_roots(doc, num_units)
+
+
+### Create the root dataframe, including the columns root, definition, and example words
+root_columns = ["root", "meaning", "example words"]
+root_df = pd.DataFrame(columns=root_columns)
+current_pointer = 0
+for i, page in enumerate(doc):
+    if current_pointer == len(all_roots_flat):
+        break
+    else:
+        current_root = all_roots_flat[current_pointer]
+
+    text = page.get_text("text")
+    page_lines = text.split("\n")
+    # Check for a root page
+    unit_match = True if page_lines[0].startswith("Unit") else False
+    root_match = (
+        True
+        if (
+            page_lines[0].startswith(current_root)
+            or unit_match
+            or (len(page_lines) > 1 and page_lines[1].startswith(current_root))
+        )
+        else False
+    )
+    if root_match:
+        root_def = clean_and_reconstruct_root_paragraphs(text, current_root, unit_match)
+        examples = ""
+        for page_num in range(i + 1, i + 5):
+            word_page = doc[page_num]
+            text = word_page.get_text("text")
+            examples += (
+                " " + clean_and_reconstruct_word_paragraphs(text)[0].split(" ")[0]
+            )
+        root_df.loc[len(root_df)] = [current_root, root_def, examples]
+        current_pointer += 1
+
+# print(root_df)
