@@ -34,10 +34,75 @@ doc = fitz.open("merriam-webster_s_vocabulary_builder.pdf")
 num_units = 30
 
 
+# Given a "word page", clean and separate paragraphs.
+# 1st paragraph: definition, 2nd: sentence, 3rd: Extended explanations.
+def clean_and_reconstruct_word_paragraphs(text):
+    lines = text.split("\n")
+    paragraphs = []
+    current_para = ""
+
+    for i, line in enumerate(lines):
+        stripped = line.strip()
+
+        if not stripped:
+            continue
+
+        # If line ends in sentence punctuation, assume it's a paragraph break
+        if re.search(r'[.!?]"?$', stripped):
+            current_para += " " + stripped
+            paragraphs.append(current_para.strip())
+            current_para = ""
+        else:
+            current_para += " " + stripped  # Continue same paragraph
+
+    # Catch any remaining paragraph
+    if current_para.strip():
+        paragraphs.append(current_para.strip())
+
+    return paragraphs
+
+
+# returns the definition of a root, given the root and whether or not it is the first root of a unit
+def clean_and_reconstruct_root_paragraphs(text, root, unit_match):
+    lines = text.split("\n")
+    paragraphs = []
+    current_para = ""
+    began = False
+    if unit_match:
+        lines_to_search = lines[2:]
+    else:
+        lines_to_search = lines
+
+    for line in lines_to_search:
+
+        if not began and not line.startswith(root):
+            continue
+        else:
+            began = True
+
+        stripped = line.strip()
+
+        if not stripped:
+            continue
+        # If line ends in sentence punctuation, assume it's a paragraph break
+        if re.search(r'[.!?]"?$', stripped):
+            current_para += " " + stripped
+            paragraphs.append(current_para.strip())
+            current_para = ""
+        else:
+            current_para += " " + stripped  # Continue same paragraph
+
+    # Catch any remaining paragraph
+    if current_para.strip():
+        paragraphs.append(current_para.strip())
+
+    return paragraphs[0]
+
+
 ## Find all roots and add them to a list
 def find_roots(doc, num_units):
     all_roots = []
-    for i, page in enumerate(doc):
+    for _, page in enumerate(doc):
         text = page.get_text("text")
         page_lines = text.split("\n")
         # Check for a Unit header
