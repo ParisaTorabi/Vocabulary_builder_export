@@ -38,17 +38,31 @@ num_units = 30
 # 1st paragraph: definition, 2nd: sentence, 3rd: Extended explanations.
 def clean_and_reconstruct_word_paragraphs(text):
     lines = text.split("\n")
+    if (
+        "Mythology" in lines[0]
+        or "Latin" in lines[0]
+        or "Greek" in lines[0]
+        or "History" in lines[0]
+    ):
+        # if re.search(
+        #     r"[A-Z]", lines[0]
+        # ):  # the words are all in lowercase, otherwise there's a title to be skipped
+        word_index = 1
+    else:
+        word_index = 0
+    word = lines[word_index]
+
     paragraphs = []
     current_para = ""
 
-    for _, line in enumerate(lines):
+    for _, line in enumerate(lines[word_index + 1 :]):
         stripped = line.strip()
 
         if not stripped:
             continue
 
         # If line ends in sentence punctuation, assume it's a paragraph break
-        if re.search(r'[.!?]"?$', stripped):
+        if re.search(r'[.!?]"?”?$', stripped):
             current_para += " " + stripped
             paragraphs.append(current_para.strip())
             current_para = ""
@@ -59,7 +73,7 @@ def clean_and_reconstruct_word_paragraphs(text):
     if current_para.strip():
         paragraphs.append(current_para.strip())
 
-    return paragraphs
+    return word, paragraphs
 
 
 # returns the definition of a root, given the root and whether or not it is the first root of a unit
@@ -85,7 +99,7 @@ def clean_and_reconstruct_root_paragraphs(text, root, unit_match):
         if not stripped:
             continue
         # If line ends in sentence punctuation, assume it's a paragraph break
-        if re.search(r'[.!?]"?$', stripped):
+        if re.search(r'[.!?]"?”?$', stripped):
             current_para += " " + stripped
             paragraphs.append(current_para.strip())
             current_para = ""
@@ -129,7 +143,12 @@ all_roots, all_roots_flat = find_roots(doc, num_units)
 ### Create the root dataframe, including the columns root, definition, and example words
 root_columns = ["root", "meaning", "example words"]
 root_df = pd.DataFrame(columns=root_columns)
+
+word_columns = ["word", "root", "definition", "sentence"]
+word_df = pd.DataFrame(columns=word_columns)
+
 current_pointer = 0
+seen_pages = []
 for i, page in enumerate(doc):
     if current_pointer == len(all_roots_flat):
         break
@@ -138,7 +157,7 @@ for i, page in enumerate(doc):
 
     text = page.get_text("text")
     page_lines = text.split("\n")
-    # Check for a root page
+    # Check for a Unit header
     unit_match = True if page_lines[0].startswith("Unit") else False
     root_match = (
         True
@@ -150,15 +169,44 @@ for i, page in enumerate(doc):
         else False
     )
     if root_match:
+        seen_pages.append(i)
         root_def = clean_and_reconstruct_root_paragraphs(text, current_root, unit_match)
+
         examples = ""
         for page_num in range(i + 1, i + 5):
+            seen_pages.append(page_num)
             word_page = doc[page_num]
             text = word_page.get_text("text")
-            examples += (
-                " " + clean_and_reconstruct_word_paragraphs(text)[0].split(" ")[0]
-            )
+            example_word, word_data = clean_and_reconstruct_word_paragraphs(text)
+            examples += " " + example_word
+            word_definition = word_data[0]
+            example_sentence = word_data[1]
+            extended_def = " ".join(word_data[2:])
+            word_df.loc[len(word_df)] = [
+                example_word,
+                current_root,
+                word_definition + "\n" + extended_def,
+                example_sentence,
+            ]
+
         root_df.loc[len(root_df)] = [current_root, root_def, examples]
         current_pointer += 1
 
-# print(root_df)
+for i, page in enumerate(doc):
+    if i not in seen_pages:
+        text = page.get_text("text")
+        if "•" in text and "INTRODUCTION" not in text:
+            example_word, word_data = clean_and_reconstruct_word_paragraphs(text)
+            word_definition = word_data[0]
+            example_sentence = word_data[1]
+            extended_def = " ".join(word_data[2:])
+            word_df.loc[len(word_df)] = [
+                example_word,
+                "--",
+                word_definition + "\n" + extended_def,
+                example_sentence,
+            ]
+
+
+root_df.to_excel("roots_df.xlsx")
+word_df.to_excel("words_df.xlsx")
