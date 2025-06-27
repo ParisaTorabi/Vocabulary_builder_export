@@ -3,7 +3,7 @@ import pandas as pd
 data = [
     {
         "Front": "What does 'benevolent' mean?",
-        "Back": "Kind and generous (bene = good)",
+        "Back": "Kind and generous \n(bene = good)",
     },
     {"Front": "Root of 'benefactor'?", "Back": "bene = good"},
 ]
