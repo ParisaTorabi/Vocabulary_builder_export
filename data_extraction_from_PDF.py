@@ -44,9 +44,6 @@ def clean_and_reconstruct_word_paragraphs(text):
         or "Greek" in lines[0]
         or "History" in lines[0]
     ):
-        # if re.search(
-        #     r"[A-Z]", lines[0]
-        # ):  # the words are all in lowercase, otherwise there's a title to be skipped
         word_index = 1
     else:
         word_index = 0
@@ -72,6 +69,9 @@ def clean_and_reconstruct_word_paragraphs(text):
     # Catch any remaining paragraph
     if current_para.strip():
         paragraphs.append(current_para.strip())
+
+    if paragraphs[0].startswith("(1)") and paragraphs[1].startswith("(2)"):
+        paragraphs = [paragraphs[0] + " " + paragraphs[1]] + paragraphs[2:]
 
     return word, paragraphs
 
