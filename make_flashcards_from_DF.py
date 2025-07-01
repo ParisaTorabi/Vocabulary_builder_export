@@ -21,43 +21,50 @@ I want to make different types of flashcards:
 
 import pandas as pd
 
-roots = pd.read_excel("roots_df.xlsx")
+if __name__ == "__main__":
+    roots = pd.read_excel("roots_df.xlsx")
 
-cards = []
-for row in roots.itertuples():
-    cards.append(
-        {
-            "Front": f"What does the root '{row.root}' mean?",
-            "Back": f"{row.meaning}\nExample words: {', '.join(row.example_words.split())}",
-        }
+    cards = []
+    for row in roots.itertuples():
+        cards.append(
+            {
+                "Front": f"What does the root '{row.root}' mean?",
+                "Back": f"{row.meaning}\nExample words: {', '.join(row.example_words.split())}",
+            }
+        )
+
+    words = pd.read_excel("words_df.xlsx", header=0, index_col=0)
+
+    for row in words.itertuples():
+        cards.append(
+            {
+                "Front": f"What does the word '{row.word.strip()}' mean?",
+                "Back": f"{row.definition}",
+            }
+        )
+        cards.append(
+            {
+                "Front": f"What is the root of '{row.word.strip()}'?",
+                "Back": f"{row.root}",
+            }
+        )
+
+        cards.append(
+            {
+                "Front": row.sentence.replace(row.word.strip(), "---"),
+                "Back": f"{row.word.strip()}",
+            }
+        )
+
+    # check if all the cards are added. 259+1200*3 = 3859
+    if len(cards) == 3859:
+        print("All cards successfully added.")
+
+    df = pd.DataFrame(cards)
+    df.to_csv(
+        "anki_import_all_cards.txt",
+        sep="\t",
+        index=False,
+        header=False,
+        encoding="utf-8",
     )
-
-
-words = pd.read_excel("words_df.xlsx", header=0, index_col=0)
-
-for row in words.itertuples():
-    cards.append(
-        {
-            "Front": f"What does the word '{row.word.strip()}' mean?",
-            "Back": f"{row.definition}",
-        }
-    )
-    cards.append(
-        {
-            "Front": f"What is the root of '{row.word.strip()}'?",
-            "Back": f"{row.root}",
-        }
-    )
-
-    cards.append(
-        {
-            "Front": row.sentence.replace(row.word.strip(), "---"),
-            "Back": f"{row.word.strip()}",
-        }
-    )
-
-
-df = pd.DataFrame(cards)
-df.to_csv(
-    "anki_import_all_cards.txt", sep="\t", index=False, header=False, encoding="utf-8"
-)
