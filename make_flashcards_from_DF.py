@@ -33,6 +33,30 @@ for row in roots.itertuples():
     )
 
 
+words = pd.read_excel("words_df.xlsx", header=0, index_col=0)
+
+for row in words.itertuples():
+    cards.append(
+        {
+            "Front": f"What does the word '{row.word.strip()}' mean?",
+            "Back": f"{row.definition}",
+        }
+    )
+    cards.append(
+        {
+            "Front": f"What is the root of '{row.word.strip()}'?",
+            "Back": f"{row.root}",
+        }
+    )
+
+    cards.append(
+        {
+            "Front": row.sentence.replace(row.word.strip(), "---"),
+            "Back": f"{row.word.strip()}",
+        }
+    )
+
+
 df = pd.DataFrame(cards)
 df.to_csv(
     "anki_import_all_cards.txt", sep="\t", index=False, header=False, encoding="utf-8"
