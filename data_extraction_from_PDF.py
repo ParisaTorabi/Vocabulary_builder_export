@@ -1,29 +1,3 @@
-"""
-I want to make different types of flashcards:
-1. root-based:
-    Front (Q): What does the root ten/tenu mean?
-    Back (A): It means “thin.” \n example words: tenuous, attenuate
-
-    and:
-
-    Front: Which root means “thin”?
-    Back: ten/tenu
-
-2. Words meanings
-    Front (Q): What does attenuate mean?
-    Back (A): To make thin or slender; to weaken or reduce in force.
-
-
-3. Example sentence
-    Front: A ___ donor gave a large endowment to the university. (Which word fits?)
-    Back: benevolent
-
-4. Root of example word
-    Front (Q): What is the root of attenuate?
-    Back (A): ten/tenu.
-
-"""
-
 import fitz  # PyMuPDF
 import re
 import pandas as pd
@@ -141,7 +115,7 @@ all_roots, all_roots_flat = find_roots(doc, num_units)
 
 
 ### Create the root dataframe, including the columns root, definition, and example words
-root_columns = ["root", "meaning", "example words"]
+root_columns = ["root", "meaning", "example_words"]
 root_df = pd.DataFrame(columns=root_columns)
 
 word_columns = ["word", "root", "definition", "sentence"]
