@@ -87,8 +87,10 @@ def clean_and_reconstruct_root_paragraphs(text, root, unit_match):
     return paragraphs[0]
 
 
-## Find all roots and add them to a list
 def find_roots(doc, num_units):
+    """
+    Find all roots and add them to a list
+    """
     all_roots = []
     unit = None
     for _, page in enumerate(doc):
